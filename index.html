@@ -1,859 +1,371 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Dashboard Efectividad de Ventas | 19-20 Ene 2026</title>
+<meta charset="UTF-8">
+<title>Project Health</title>
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-
-  <style>
-    :root{
-      --bg:#0b1220;
-      --panel:#0f1a2e;
-      --panel2:#0c1628;
-      --text:#e7eefc;
-      --muted:#9fb2d6;
-      --line:rgba(255,255,255,.08);
-      --accent:#2f7bff;
-      --good:#29d07f;
-      --bad:#ff4d6d;
-      --shadow: 0 12px 30px rgba(0,0,0,.35);
-      --radius: 18px;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:var(--sans);
-      color:var(--text);
-      background:
-        radial-gradient(1200px 600px at 10% -20%, rgba(47,123,255,.25), transparent 60%),
-        radial-gradient(1000px 500px at 100% 0%, rgba(41,208,127,.18), transparent 50%),
-        linear-gradient(180deg, #070c16, var(--bg));
-    }
-    .wrap{max-width:1280px; margin:0 auto; padding:22px;}
-
-    header{
-      display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
-      margin-bottom:18px;
-    }
-
-    /* Title area with logo */
-    .titleArea{
-      display:flex; gap:14px; align-items:center; min-width: 260px;
-    }
-    .logoBox{
-      width:52px; height:52px;
-      border-radius:14px;
-      background:rgba(255,255,255,.05);
-      border:1px solid var(--line);
-      display:grid; place-items:center;
-      box-shadow: var(--shadow);
-      overflow:hidden;
-      flex:0 0 auto;
-    }
-    .logoBox img{
-      width:100%;
-      height:100%;
-      object-fit:contain;
-      padding:8px;
-      display:block;
-    }
-    .title h1{margin:0; font-size:22px; letter-spacing:.2px;}
-    .title p{margin:6px 0 0; color:var(--muted); font-size:13px;}
-
-    .filters{
-      display:grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap:10px;
-      min-width:min(720px, 100%);
-    }
-    .filter{
-      background:rgba(255,255,255,.04);
-      border:1px solid var(--line);
-      border-radius:14px;
-      padding:10px 12px;
-      box-shadow: var(--shadow);
-    }
-    .filter label{display:block; font-size:11px; color:var(--muted); margin-bottom:6px;}
-    select, input{
-      width:100%;
-      background:transparent;
-      border:1px solid rgba(255,255,255,.12);
-      color:var(--text);
-      border-radius:12px;
-      padding:9px 10px;
-      outline:none;
-      font-size:13px;
-    }
-    option{background:#0b1220;}
-
-    .grid{
-      display:grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap:14px;
-    }
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      border:1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-    }
-    .card .hd{
-      display:flex; justify-content:space-between; align-items:center;
-      padding:14px 16px 0;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-    .card .hd h3{margin:0; font-size:13px; color:var(--muted); font-weight:600;}
-    .card .bd{padding:12px 16px 16px;}
-
-    .kpis{grid-column: 1 / -1; padding:14px;}
-    .kpiRow{
-      display:grid; grid-template-columns: repeat(6, minmax(0,1fr));
-      gap:12px;
-    }
-    .kpi{
-      background:rgba(0,0,0,.18);
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:12px 12px;
-      min-height:84px;
-    }
-    .kpi .name{font-size:11px; color:var(--muted); margin-bottom:8px;}
-    .kpi .val{font-size:20px; font-weight:800; letter-spacing:.2px;}
-    .kpi .sub{
-      margin-top:6px;
-      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
-      font-size:12px; color:var(--muted);
-    }
-    .chip{
-      padding:4px 8px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.04);
-      font-family:var(--mono);
-      font-size:11px;
-    }
-    .delta.good{color:var(--good)}
-    .delta.bad{color:var(--bad)}
-    .delta.neutral{color:var(--muted)}
-
-    .chart1{grid-column: 1 / 8;}
-    .chart2{grid-column: 8 / -1;}
-    .tableCard{grid-column: 1 / -1;}
-
-    canvas{width:100% !important; height:320px !important;}
-
-    .tableWrap{overflow:auto; border-radius:16px; border:1px solid var(--line); background:rgba(0,0,0,.18);}
-    table{
-      width:100%;
-      border-collapse:separate;
-      border-spacing:0;
-      min-width:1050px;
-    }
-    thead th{
-      position:sticky; top:0;
-      background:rgba(11,18,32,.92);
-      backdrop-filter: blur(10px);
-      z-index:2;
-      text-align:left;
-      padding:10px 10px;
-      font-size:11px;
-      color:var(--muted);
-      border-bottom:1px solid var(--line);
-      white-space:nowrap;
-    }
-    tbody td{
-      padding:10px 10px;
-      border-bottom:1px solid rgba(255,255,255,.06);
-      font-size:12px;
-      white-space:nowrap;
-    }
-    tbody tr:hover td{background:rgba(255,255,255,.03);}
-
-    .pill{
-      font-family:var(--mono);
-      font-size:11px;
-      padding:4px 8px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.03);
-      display:inline-flex; align-items:center; gap:6px;
-    }
-    .mono{font-family:var(--mono)}
-    .right{text-align:right}
-    .muted{color:var(--muted)}
-
-    /* Totals row style */
-    .totalRow td{
-      font-weight:800;
-      background:rgba(47,123,255,.12);
-      border-bottom:1px solid rgba(255,255,255,.10);
-    }
-    .totalRow:hover td{background:rgba(47,123,255,.14);}
-
-    .foot{
-      margin-top:14px;
-      color:var(--muted);
-      font-size:12px;
-      display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;
-    }
-    .btn{
-      cursor:pointer;
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.05);
-      color:var(--text);
-      font-size:12px;
-    }
-    .btn:hover{background:rgba(255,255,255,.08);}
-
-    @media (max-width: 1100px){
-      header{flex-direction:column; align-items:stretch;}
-      .filters{grid-template-columns:1fr; min-width:unset;}
-      .kpiRow{grid-template-columns: repeat(2, minmax(0,1fr));}
-      .chart1{grid-column: 1 / -1;}
-      .chart2{grid-column: 1 / -1;}
-      canvas{height:300px !important;}
-    }
-  </style>
+<style>
+body{font-family:Arial,sans-serif;background:#f4f6f9;margin:0;padding:20px;color:#1f2937}
+.container{max-width:1400px;margin:auto;background:white;padding:25px;border-radius:14px}
+h1,h2{color:#0f172a}
+label{font-weight:bold;display:block;margin-top:12px}
+input,select,textarea{width:100%;padding:10px;margin-top:5px;border:1px solid #cbd5e1;border-radius:8px;box-sizing:border-box}
+textarea{min-height:70px}
+.grid,.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
+.card{background:#fff;padding:18px;border-radius:12px;border:1px solid #e5e7eb}
+.card p{font-size:32px;font-weight:bold;margin:8px 0}
+button{margin-top:15px;padding:12px 18px;border:0;border-radius:8px;background:#2563eb;color:white;font-weight:bold;cursor:pointer}
+.danger{background:#dc2626}
+.admin-btn{background:#64748b}
+.admin-area{text-align:right;margin-top:20px}
+table{width:100%;border-collapse:collapse;margin-top:20px}
+th,td{border:1px solid #e5e7eb;padding:10px;text-align:left;font-size:14px;vertical-align:top}
+th{background:#f8fafc}
+.row-good{background:#f0fdfa}
+.row-risk{background:#fffbeb}
+.row-attention{background:#fef2f2}
+.badge{padding:7px 12px;border-radius:8px;font-weight:bold;display:inline-block}
+.badge-good{background:#ccfbf1;color:#0f766e}
+.badge-risk{background:#fef3c7;color:#92400e}
+.badge-attention{background:#fee2e2;color:#991b1b}
+.good{color:#14b8a6;font-weight:bold}
+.risk{color:#f59e0b;font-weight:bold}
+.attention{color:#ef4444;font-weight:bold}
+</style>
 </head>
 
 <body>
-  <div class="wrap">
-    <header>
-      <div class="titleArea">
-        <!-- LOGO: pon tu archivo en el repo con nombre "logo.png" (misma carpeta que index.html) -->
-        <div class="logoBox" title="Logo">
-          <img src="logo.png" alt="Logo" onerror="this.style.display='none'; this.parentElement.textContent='LOGO'; this.parentElement.style.color='#9fb2d6'; this.parentElement.style.fontFamily='var(--mono)';" />
-        </div>
+<div class="container">
 
-        <div class="title">
-          <h1>Dashboard Efectividad de Ventas</h1>
-          <p>Comparativo por equipo y agente • <span class="mono">2026-01-19</span> vs <span class="mono">2026-01-20</span></p>
-        </div>
-      </div>
+<h1>Project Health</h1>
 
-      <div class="filters">
-        <div class="filter">
-          <label for="dateSel">Fecha (detalle y ranking)</label>
-          <select id="dateSel">
-            <option value="2026-01-19">19/01/2026</option>
-            <option value="2026-01-20">20/01/2026</option>
-          </select>
-        </div>
+<h2>Dashboard Ejecutivo</h2>
 
-        <div class="filter">
-          <label for="teamSel">Team</label>
-          <select id="teamSel">
-            <option value="__ALL__">Todos</option>
-          </select>
-        </div>
+<div class="cards">
+  <div class="card"><h3>Total Projects</h3><p id="cardProjects">0</p></div>
+  <div class="card"><h3>Good</h3><p id="cardGood">0</p></div>
+  <div class="card"><h3>At Risk</h3><p id="cardRisk">0</p></div>
+  <div class="card"><h3>Needs Attention</h3><p id="cardAttention">0</p></div>
+  <div class="card"><h3>Late Projects</h3><p id="cardLate">0</p></div>
+</div>
 
-        <div class="filter">
-          <label for="metricSel">Métrica principal (tarjetas y ranking)</label>
-          <select id="metricSel">
-            <option value="dials">Dials</option>
-            <option value="contacts">Contacts</option>
-            <option value="successFive9">Success Five9</option>
-            <option value="talkTimeSec">Talk Time</option>
-            <option value="leadInbound">Lead Inbound</option>
-            <option value="productPresentation">Product Presentation</option>
-            <option value="cotizacion">Cotización</option>
-            <option value="successHubspot">Success HubSpot</option>
-            <option value="totalClientes">Total de Clientes</option>
-            <option value="campanas">Campañas</option>
-            <option value="facturado">Facturado</option>
-          </select>
-        </div>
-      </div>
-    </header>
+<h2>Agregar Proyecto</h2>
 
-    <div class="grid">
-
-      <!-- KPI CARD -->
-      <div class="card kpis">
-        <div class="hd">
-          <h3>Resumen diario (con delta vs el otro día)</h3>
-          <div style="display:flex; gap:10px; align-items:center;">
-            <span class="chip" id="scopeChip">Scope: Todos</span>
-            <button class="btn" id="resetBtn">Reset filtros</button>
-          </div>
-        </div>
-        <div class="bd">
-          <div class="kpiRow" id="kpiRow"></div>
-        </div>
-      </div>
-
-      <!-- CHART 1 -->
-      <div class="card chart1">
-        <div class="hd"><h3>Comparativo Totales por Día</h3></div>
-        <div class="bd">
-          <canvas id="totalsChart"></canvas>
-        </div>
-      </div>
-
-      <!-- CHART 2 -->
-      <div class="card chart2">
-        <div class="hd"><h3>Ranking por Agente (según métrica seleccionada)</h3></div>
-        <div class="bd">
-          <canvas id="rankChart"></canvas>
-        </div>
-      </div>
-
-      <!-- TABLE -->
-      <div class="card tableCard">
-        <div class="hd">
-          <h3>Detalle por Agente (Fecha seleccionada) + Totales</h3>
-          <span class="muted" id="tableHint">La fila “Totales” usa tus totales pegados cuando el Team = “Todos”.</span>
-        </div>
-        <div class="bd">
-          <div class="tableWrap">
-            <table id="detailTable">
-              <thead>
-                <tr>
-                  <th>Team</th>
-                  <th>Agente</th>
-                  <th class="right">Dials</th>
-                  <th class="right">Contacts</th>
-                  <th class="right">Success Five9</th>
-                  <th class="right">Talk Time</th>
-                  <th class="right">Lead Inbound</th>
-                  <th class="right">Product Presentation</th>
-                  <th class="right">Cotización</th>
-                  <th class="right">Success HubSpot</th>
-                  <th class="right">Cliente Outbound</th>
-                  <th class="right">Referido</th>
-                  <th class="right">Inbound Meses Anteriores</th>
-                  <th class="right">Nuevos Lead MM</th>
-                  <th class="right">Total Clientes</th>
-                  <th class="right">Campañas</th>
-                  <th class="right">Facturado</th>
-                </tr>
-              </thead>
-              <tbody id="detailTbody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="foot">
-      <div class="muted">
-        Para el logo: sube un archivo llamado <span class="mono">logo.png</span> en la misma carpeta del <span class="mono">index.html</span>.
-      </div>
-      <div class="muted mono" id="lastUpdated"></div>
-    </div>
+<div class="grid">
+  <div>
+    <label>Project URL</label>
+    <input type="url" id="projectUrl">
   </div>
 
-  <script>
-    // -----------------------------
-    // 1) TOTALES (los que pegaste)
-    // -----------------------------
-    const DAILY_TOTALS = {
-      "2026-01-19": {
-        dials: 2044,
-        contacts: 529,
-        talkTime: "29:28:29",
-        successFive9: 8,
-        leadInbound: 0,
-        productPresentation: 9,
-        cotizacion: 1,
-        successHubspot: 10,
-        clienteOutbound: 0,
-        referido: 0,
-        inboundMesesAnteriores: 1,
-        nuevosLeadMM: 1,
-        totalClientes: 2,
-        campanas: 0,
-        facturado: 2500.00
-      },
-      "2026-01-20": {
-        dials: 1770,
-        contacts: 617,
-        talkTime: "39:54:24",
-        successFive9: 17,
-        leadInbound: 67,
-        productPresentation: 12,
-        cotizacion: 2,
-        successHubspot: 14,
-        clienteOutbound: 1,
-        referido: 0,
-        inboundMesesAnteriores: 0,
-        nuevosLeadMM: 0,
-        totalClientes: 1,
-        campanas: 2,
-        facturado: 3700.00
-      }
+  <div>
+    <label>Team Responsable</label>
+    <input type="text" id="teamResponsable">
+  </div>
+
+  <div>
+    <label>Categoría de Proyecto</label>
+    <input type="text" id="categoriaProyecto" placeholder="Escribe la categoría">
+  </div>
+
+  <div>
+    <label>Días Late</label>
+    <input type="number" id="diasLate" min="0" value="0">
+  </div>
+
+  <div>
+    <label>Health</label>
+    <select id="health">
+      <option>Good</option>
+      <option>At Risk</option>
+      <option>Needs Attention</option>
+    </select>
+  </div>
+</div>
+
+<label>Última nota</label>
+<textarea id="ultimaNota"></textarea>
+
+<button onclick="agregarProyecto()">Agregar proyecto</button>
+
+<h2>Filtros</h2>
+
+<div class="grid">
+  <div>
+    <label>Filtrar por Team Responsable</label>
+    <input type="text" id="filterTeamResponsable" oninput="actualizarTabla()">
+  </div>
+
+  <div>
+    <label>Filtrar por Categoría</label>
+    <input type="text" id="filterCategoriaProyecto" oninput="actualizarTabla()">
+  </div>
+
+  <div>
+    <label>Filtrar por Health</label>
+    <select id="filterHealth" onchange="actualizarTabla()">
+      <option value="">Todos</option>
+      <option>Good</option>
+      <option>At Risk</option>
+      <option>Needs Attention</option>
+    </select>
+  </div>
+
+  <div>
+    <label>Ordenar por</label>
+    <select id="sortBy" onchange="actualizarTabla()">
+      <option value="">Sin ordenar</option>
+      <option value="health">Health</option>
+      <option value="teamResponsable">Team Responsable</option>
+      <option value="categoriaProyecto">Categoría</option>
+      <option value="diasLate">Días Late</option>
+    </select>
+  </div>
+</div>
+
+<h2>Listado de Proyectos</h2>
+
+<table>
+<thead>
+<tr>
+  <th>#</th>
+  <th>Project URL</th>
+  <th>Team Responsable</th>
+  <th>Categoría</th>
+  <th>Días Late</th>
+  <th>Health</th>
+  <th>Última nota</th>
+  <th>Acción</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+
+<h2>Bloqueos Identificados</h2>
+<textarea id="bloqueos"></textarea>
+
+<h2>Acciones Requeridas</h2>
+<textarea id="acciones"></textarea>
+
+<div class="admin-area">
+  <button class="admin-btn" onclick="mostrarBotonAdmin()">
+    Acceso Administrador
+  </button>
+
+  <button
+    id="btnReset"
+    class="danger"
+    onclick="reiniciarReporte()"
+    style="display:none;">
+    Reiniciar reporte
+  </button>
+</div>
+
+</div>
+
+<script>
+let proyectos = [];
+
+function agregarProyecto(){
+  const projectUrl = document.getElementById("projectUrl").value;
+  const teamResponsable = document.getElementById("teamResponsable").value;
+  const categoriaProyecto = document.getElementById("categoriaProyecto").value;
+  const diasLate = Number(document.getElementById("diasLate").value);
+  const health = document.getElementById("health").value;
+  const ultimaNota = document.getElementById("ultimaNota").value;
+
+  if(!projectUrl || !teamResponsable || !categoriaProyecto){
+    alert("Completa Project URL, Team Responsable y Categoría.");
+    return;
+  }
+
+  proyectos.push({
+    projectUrl,
+    teamResponsable,
+    categoriaProyecto,
+    diasLate,
+    health,
+    ultimaNota
+  });
+
+  limpiarFormulario();
+  actualizarTodo();
+}
+
+function limpiarFormulario(){
+  document.getElementById("projectUrl").value = "";
+  document.getElementById("teamResponsable").value = "";
+  document.getElementById("categoriaProyecto").value = "";
+  document.getElementById("diasLate").value = 0;
+  document.getElementById("health").value = "Good";
+  document.getElementById("ultimaNota").value = "";
+}
+
+function healthBadge(health){
+  if(health === "Good"){
+    return '<span class="badge badge-good">Good</span>';
+  }
+
+  if(health === "At Risk"){
+    return '<span class="badge badge-risk">At Risk</span>';
+  }
+
+  return '<span class="badge badge-attention">Needs Attention</span>';
+}
+
+function rowClass(health){
+  if(health === "Good") return "row-good";
+  if(health === "At Risk") return "row-risk";
+  return "row-attention";
+}
+
+function diasLateBadge(diasLate){
+  if(diasLate > 5){
+    return '<span class="attention">' + diasLate + ' días late</span>';
+  }
+
+  if(diasLate > 0){
+    return '<span class="risk">' + diasLate + ' días late</span>';
+  }
+
+  return '<span class="good">0 días late</span>';
+}
+
+function obtenerProyectosFiltrados(){
+  const team = document.getElementById("filterTeamResponsable").value.toLowerCase();
+  const categoria = document.getElementById("filterCategoriaProyecto").value.toLowerCase();
+  const health = document.getElementById("filterHealth").value;
+  const sortBy = document.getElementById("sortBy").value;
+
+  let data = [...proyectos];
+
+  if(team){
+    data = data.filter(p => p.teamResponsable.toLowerCase().includes(team));
+  }
+
+  if(categoria){
+    data = data.filter(p => p.categoriaProyecto.toLowerCase().includes(categoria));
+  }
+
+  if(health){
+    data = data.filter(p => p.health === health);
+  }
+
+  if(sortBy === "health"){
+    const orden = {
+      "Needs Attention": 1,
+      "At Risk": 2,
+      "Good": 3
     };
+    data.sort((a,b) => orden[a.health] - orden[b.health]);
+  }
 
-    // -----------------------------
-    // 2) DETALLE POR AGENTE (lo que pegaste)
-    // -----------------------------
-    const AGENT_ROWS = [
-      // 19/01
-      {date:"2026-01-19", team:"Equipo de Ventas Anuar", agent:"Angeles Espinoza", dials:205, contacts:16, successFive9:0, talkTime:"0:58:27", leadInbound:0, productPresentation:1, cotizacion:0, successHubspot:1, clienteOutbound:0, referido:0, inboundMesesAnteriores:1, nuevosLeadMM:0, totalClientes:1, campanas:0, facturado:500.00},
-      {date:"2026-01-19", team:"Equipo de Ventas Anuar", agent:"Geraldine Murillo", dials:297, contacts:16, successFive9:0, talkTime:"1:36:11", leadInbound:0, productPresentation:0, cotizacion:0, successHubspot:0, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:0.00},
-      {date:"2026-01-19", team:"Equipo de Ventas Anuar", agent:"Judith Mercado", dials:126, contacts:13, successFive9:2, talkTime:"1:42:06", leadInbound:0, productPresentation:2, cotizacion:0, successHubspot:2, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:0.00},
-      {date:"2026-01-19", team:"Equipo de Ventas Anuar", agent:"Rodrigo Guadamuz", dials:159, contacts:11, successFive9:0, talkTime:"1:30:59", leadInbound:0, productPresentation:0, cotizacion:0, successHubspot:0, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:0.00},
-      {date:"2026-01-19", team:"Equipo de Ventas Anuar", agent:"Alexia Rodríguez", dials:156, contacts:18, successFive9:0, talkTime:"2:01:05", leadInbound:0, productPresentation:0, cotizacion:0, successHubspot:0, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:0.00},
-      {date:"2026-01-19", team:"Equipo de Ventas Anuar", agent:"Mariett Castro", dials:181, contacts:14, successFive9:0, talkTime:"3:08:35", leadInbound:0, productPresentation:0, cotizacion:0, successHubspot:0, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:0.00},
+  if(sortBy === "teamResponsable"){
+    data.sort((a,b) => a.teamResponsable.localeCompare(b.teamResponsable));
+  }
 
-      {date:"2026-01-19", team:"Post venta", agent:"Andrea Rivera", dials:197, contacts:172, successFive9:0, talkTime:"3:25:38", leadInbound:0, productPresentation:0, cotizacion:0, successHubspot:0, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:500.00},
-      {date:"2026-01-19", team:"Post venta", agent:"Alejandra Rodriguez", dials:65, contacts:20, successFive9:0, talkTime:"1:18:55", leadInbound:0, productPresentation:0, cotizacion:0, successHubspot:0, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:0.00},
-      {date:"2026-01-19", team:"Post venta", agent:"Ariana Leiva", dials:157, contacts:73, successFive9:1, talkTime:"2:00:25", leadInbound:0, productPresentation:1, cotizacion:0, successHubspot:1, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:500.00},
-      {date:"2026-01-19", team:"Post venta", agent:"David Espinoza", dials:75, contacts:55, successFive9:0, talkTime:"2:40:03", leadInbound:0, productPresentation:0, cotizacion:0, successHubspot:0, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:0.00},
-      {date:"2026-01-19", team:"Post venta", agent:"Jonathan Salinas", dials:83, contacts:23, successFive9:3, talkTime:"3:47:33", leadInbound:0, productPresentation:3, cotizacion:0, successHubspot:3, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:0.00},
-      {date:"2026-01-19", team:"Post venta", agent:"Mario Castano", dials:33, contacts:25, successFive9:0, talkTime:"1:40:47", leadInbound:0, productPresentation:0, cotizacion:0, successHubspot:0, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:0.00},
-      {date:"2026-01-19", team:"Post venta", agent:"Nicole Garcia", dials:164, contacts:46, successFive9:2, talkTime:"1:50:24", leadInbound:0, productPresentation:2, cotizacion:1, successHubspot:3, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:0.00},
-      {date:"2026-01-19", team:"Post venta", agent:"Paola Paz", dials:0, contacts:0, successFive9:0, talkTime:"0:00:00", leadInbound:0, productPresentation:0, cotizacion:0, successHubspot:0, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:0.00},
-      {date:"2026-01-19", team:"Post venta", agent:"Veronica Ramirez", dials:146, contacts:27, successFive9:0, talkTime:"1:47:21", leadInbound:0, productPresentation:0, cotizacion:0, successHubspot:0, clienteOutbound:0, referido:0, inboundMesesAnteriores:1, nuevosLeadMM:1, totalClientes:0, campanas:0, facturado:1000.00},
+  if(sortBy === "categoriaProyecto"){
+    data.sort((a,b) => a.categoriaProyecto.localeCompare(b.categoriaProyecto));
+  }
 
-      // 20/01
-      {date:"2026-01-20", team:"Equipo de Ventas Anuar", agent:"Angeles Espinoza", dials:243, contacts:32, successFive9:4, talkTime:"4:03:04", leadInbound:3, productPresentation:4, cotizacion:0, successHubspot:4, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:0.00},
-      {date:"2026-01-20", team:"Equipo de Ventas Anuar", agent:"Geraldine Murillo", dials:294, contacts:31, successFive9:0, talkTime:"2:35:57", leadInbound:11, productPresentation:0, cotizacion:0, successHubspot:0, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:0.00},
-      {date:"2026-01-20", team:"Equipo de Ventas Anuar", agent:"Judith Mercado", dials:179, contacts:24, successFive9:2, talkTime:"2:31:13", leadInbound:10, productPresentation:2, cotizacion:0, successHubspot:2, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:0.00},
-      {date:"2026-01-20", team:"Equipo de Ventas Anuar", agent:"Rodrigo Guadamuz", dials:0, contacts:0, successFive9:0, talkTime:"0:00:00", leadInbound:0, productPresentation:0, cotizacion:0, successHubspot:0, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:0.00},
-      {date:"2026-01-20", team:"Equipo de Ventas Anuar", agent:"Alexia Rodríguez", dials:132, contacts:22, successFive9:1, talkTime:"2:59:19", leadInbound:8, productPresentation:1, cotizacion:0, successHubspot:1, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:500.00},
-      {date:"2026-01-20", team:"Equipo de Ventas Anuar", agent:"Mariett Castro", dials:97, contacts:20, successFive9:4, talkTime:"3:54:16", leadInbound:7, productPresentation:2, cotizacion:0, successHubspot:2, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:1100.00},
+  if(sortBy === "diasLate"){
+    data.sort((a,b) => b.diasLate - a.diasLate);
+  }
 
-      {date:"2026-01-20", team:"Post venta", agent:"Andrea Rivera", dials:103, contacts:87, successFive9:0, talkTime:"4:05:41", leadInbound:6, productPresentation:1, cotizacion:0, successHubspot:1, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:1, facturado:450.00},
-      {date:"2026-01-20", team:"Post venta", agent:"Alejandra Rodriguez", dials:98, contacts:61, successFive9:0, talkTime:"3:00:45", leadInbound:0, productPresentation:0, cotizacion:0, successHubspot:0, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:0.00},
-      {date:"2026-01-20", team:"Post venta", agent:"Ariana Leiva", dials:109, contacts:58, successFive9:1, talkTime:"2:35:48", leadInbound:5, productPresentation:0, cotizacion:0, successHubspot:0, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:750.00},
-      {date:"2026-01-20", team:"Post venta", agent:"David Espinoza", dials:109, contacts:85, successFive9:0, talkTime:"1:35:00", leadInbound:5, productPresentation:0, cotizacion:0, successHubspot:0, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:0.00},
-      {date:"2026-01-20", team:"Post venta", agent:"Jonathan Salinas", dials:87, contacts:31, successFive9:0, talkTime:"2:56:26", leadInbound:0, productPresentation:0, cotizacion:0, successHubspot:0, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:300.00},
-      {date:"2026-01-20", team:"Post venta", agent:"Mario Castano", dials:73, contacts:61, successFive9:0, talkTime:"2:31:20", leadInbound:1, productPresentation:0, cotizacion:0, successHubspot:0, clienteOutbound:1, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:1, campanas:1, facturado:300.00},
-      {date:"2026-01-20", team:"Post venta", agent:"Nicole Garcia", dials:130, contacts:69, successFive9:4, talkTime:"3:12:46", leadInbound:5, productPresentation:1, cotizacion:2, successHubspot:3, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:0.00},
-      {date:"2026-01-20", team:"Post venta", agent:"Paola Paz", dials:0, contacts:0, successFive9:0, talkTime:"0:00:00", leadInbound:0, productPresentation:0, cotizacion:0, successHubspot:0, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:0.00},
-      {date:"2026-01-20", team:"Post venta", agent:"Veronica Ramirez", dials:116, contacts:36, successFive9:1, talkTime:"3:52:49", leadInbound:6, productPresentation:1, cotizacion:0, successHubspot:1, clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0, totalClientes:0, campanas:0, facturado:300.00}
-    ];
+  return data;
+}
 
-    // -----------------------------
-    // Helpers
-    // -----------------------------
-    const fmtInt = (n) => new Intl.NumberFormat("es-ES").format(n ?? 0);
-    const fmtMoney = (n) => new Intl.NumberFormat("es-ES",{style:"currency",currency:"USD"}).format(n ?? 0);
+function actualizarTabla(){
+  const tbody = document.getElementById("tbody");
+  tbody.innerHTML = "";
 
-    function timeToSeconds(hms){
-      const parts = String(hms || "0:00:00").split(":").map(x=>parseInt(x,10)||0);
-      while(parts.length<3) parts.unshift(0);
-      const [h,m,s]=parts;
-      return h*3600 + m*60 + s;
-    }
-    function secondsToHMS(sec){
-      sec = Math.max(0, Math.floor(sec||0));
-      const h = Math.floor(sec/3600);
-      const m = Math.floor((sec%3600)/60);
-      const s = sec%60;
-      return `${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
-    }
+  const data = obtenerProyectosFiltrados();
 
-    function deltaClass(d){
-      if (d > 0) return "good";
-      if (d < 0) return "bad";
-      return "neutral";
-    }
-    function deltaText(d, isMoney=false, isTime=false){
-      if (isTime){
-        const sign = d>0?"+":d<0?"-":"";
-        return sign + secondsToHMS(Math.abs(d));
-      }
-      if (isMoney){
-        const sign = d>0?"+":"";
-        return sign + fmtMoney(d).replace("$-","-$");
-      }
-      const sign = d>0?"+":"";
-      return sign + fmtInt(d);
-    }
+  data.forEach((p,i) => {
+    const originalIndex = proyectos.indexOf(p);
 
-    function pickLabel(metric){
-      const map = {
-        dials: "Dials",
-        contacts: "Contacts",
-        successFive9: "Success Five9",
-        talkTimeSec: "Talk Time",
-        leadInbound: "Lead Inbound",
-        productPresentation: "Product Presentation",
-        cotizacion: "Cotización",
-        successHubspot: "Success HubSpot",
-        clienteOutbound: "Cliente Outbound",
-        referido: "Referido",
-        inboundMesesAnteriores: "Inbound Meses Anteriores",
-        nuevosLeadMM: "Nuevos Lead MM",
-        totalClientes: "Total Clientes",
-        campanas: "Campañas",
-        facturado: "Facturado"
-      };
-      return map[metric] || metric;
-    }
-    function getOtherDate(d){
-      return d === "2026-01-19" ? "2026-01-20" : "2026-01-19";
-    }
+    tbody.innerHTML += `
+      <tr class="${rowClass(p.health)}">
+        <td>${i + 1}</td>
+        <td><a href="${p.projectUrl}" target="_blank">Open project</a></td>
+        <td>${p.teamResponsable}</td>
+        <td>${p.categoriaProyecto}</td>
+        <td>${diasLateBadge(p.diasLate)}</td>
+        <td>${healthBadge(p.health)}</td>
+        <td>${p.ultimaNota || "Sin nota registrada"}</td>
+        <td><button class="danger" onclick="eliminarProyecto(${originalIndex})">Eliminar</button></td>
+      </tr>
+    `;
+  });
+}
 
-    // -----------------------------
-    // UI STATE
-    // -----------------------------
-    const state = {
-      date: "2026-01-19",
-      team: "__ALL__",
-      metric: "facturado"
-    };
+function actualizarCards(){
+  const total = proyectos.length;
+  const good = proyectos.filter(p => p.health === "Good").length;
+  const risk = proyectos.filter(p => p.health === "At Risk").length;
+  const attention = proyectos.filter(p => p.health === "Needs Attention").length;
+  const late = proyectos.filter(p => Number(p.diasLate) > 0).length;
 
-    const dateSel = document.getElementById("dateSel");
-    const teamSel = document.getElementById("teamSel");
-    const metricSel = document.getElementById("metricSel");
-    const scopeChip = document.getElementById("scopeChip");
-    const kpiRow = document.getElementById("kpiRow");
-    const detailTbody = document.getElementById("detailTbody");
-    const resetBtn = document.getElementById("resetBtn");
-    const lastUpdated = document.getElementById("lastUpdated");
+  document.getElementById("cardProjects").innerText = total;
+  document.getElementById("cardGood").innerText = good;
+  document.getElementById("cardRisk").innerText = risk;
+  document.getElementById("cardAttention").innerText = attention;
+  document.getElementById("cardLate").innerText = late;
+}
 
-    // -----------------------------
-    // Filters
-    // -----------------------------
-    function initTeams(){
-      const teams = Array.from(new Set(AGENT_ROWS.map(r=>r.team))).sort();
-      for(const t of teams){
-        const opt = document.createElement("option");
-        opt.value = t;
-        opt.textContent = t;
-        teamSel.appendChild(opt);
-      }
-    }
+function eliminarProyecto(i){
+  const password = prompt("Ingrese contraseña para eliminar este proyecto:");
 
-    // -----------------------------
-    // Data views
-    // -----------------------------
-    function filteredRows(date, team){
-      return AGENT_ROWS
-        .filter(r => r.date === date)
-        .filter(r => team === "__ALL__" ? true : r.team === team);
-    }
+  if(password !== "Elite2025"){
+    alert("Contraseña incorrecta.");
+    return;
+  }
 
-    function summarizeRows(rows){
-      const sum = {
-        dials:0, contacts:0, successFive9:0, talkTimeSec:0,
-        leadInbound:0, productPresentation:0, cotizacion:0, successHubspot:0,
-        clienteOutbound:0, referido:0, inboundMesesAnteriores:0, nuevosLeadMM:0,
-        totalClientes:0, campanas:0, facturado:0
-      };
-      for(const r of rows){
-        sum.dials += r.dials||0;
-        sum.contacts += r.contacts||0;
-        sum.successFive9 += r.successFive9||0;
-        sum.talkTimeSec += timeToSeconds(r.talkTime);
-        sum.leadInbound += r.leadInbound||0;
-        sum.productPresentation += r.productPresentation||0;
-        sum.cotizacion += r.cotizacion||0;
-        sum.successHubspot += r.successHubspot||0;
-        sum.clienteOutbound += r.clienteOutbound||0;
-        sum.referido += r.referido||0;
-        sum.inboundMesesAnteriores += r.inboundMesesAnteriores||0;
-        sum.nuevosLeadMM += r.nuevosLeadMM||0;
-        sum.totalClientes += r.totalClientes||0;
-        sum.campanas += r.campanas||0;
-        sum.facturado += r.facturado||0;
-      }
-      return sum;
-    }
+  proyectos.splice(i,1);
+  actualizarTodo();
+}
 
-    function totalsFromSource(date, team){
-      // Si team = Todos, usa tus totales pegados (DAILY_TOTALS).
-      // Si team específico, calcula por suma (no existe total oficial por team en la data).
-      if (team === "__ALL__"){
-        const t = DAILY_TOTALS[date];
-        return {
-          dials: t.dials,
-          contacts: t.contacts,
-          successFive9: t.successFive9,
-          talkTimeSec: timeToSeconds(t.talkTime),
-          leadInbound: t.leadInbound,
-          productPresentation: t.productPresentation,
-          cotizacion: t.cotizacion,
-          successHubspot: t.successHubspot,
-          clienteOutbound: t.clienteOutbound,
-          referido: t.referido,
-          inboundMesesAnteriores: t.inboundMesesAnteriores,
-          nuevosLeadMM: t.nuevosLeadMM,
-          totalClientes: t.totalClientes,
-          campanas: t.campanas,
-          facturado: t.facturado
-        };
-      }
-      return summarizeRows(filteredRows(date, team));
-    }
+function actualizarTodo(){
+  actualizarTabla();
+  actualizarCards();
+}
 
-    // -----------------------------
-    // Render KPIs
-    // -----------------------------
-    function renderKPIs(){
-      const d = state.date;
-      const other = getOtherDate(d);
+function mostrarBotonAdmin(){
+  const password = prompt("Contraseña de administrador:");
 
-      const cur = totalsFromSource(d, state.team);
-      const oth = totalsFromSource(other, state.team);
+  if(password === "Elite2025"){
+    document.getElementById("btnReset").style.display = "inline-block";
+    alert("Acceso concedido.");
+  }else{
+    alert("Contraseña incorrecta.");
+  }
+}
 
-      scopeChip.textContent = `Scope: ${state.team === "__ALL__" ? "Todos" : state.team}`;
+function reiniciarReporte(){
+  const password = prompt("Confirme nuevamente la contraseña:");
 
-      const base = [
-        {key:"dials", label:"Total Dials", fmt:(x)=>fmtInt(x), isTime:false},
-        {key:"contacts", label:"Total Contacts", fmt:(x)=>fmtInt(x), isTime:false},
-        {key:"successFive9", label:"Éxitos Five9", fmt:(x)=>fmtInt(x), isTime:false},
-        {key:"successHubspot", label:"Éxitos HubSpot", fmt:(x)=>fmtInt(x), isTime:false},
-        {key:"leadInbound", label:"Lead Inbound", fmt:(x)=>fmtInt(x), isTime:false},
-        {key:"facturado", label:"Facturado", fmt:(x)=>fmtMoney(x), isMoney:true}
-      ];
+  if(password !== "Elite2025"){
+    alert("Contraseña incorrecta.");
+    return;
+  }
 
-      // Si la métrica principal no está en las 6 tarjetas, reemplaza la #5 (Lead Inbound) por la elegida
-      const main = state.metric;
-      if (!base.some(k => k.key === main)){
-        base[4] = {
-          key: main,
-          label: pickLabel(main),
-          fmt: (x)=>{
-            if (main === "talkTimeSec") return secondsToHMS(x);
-            if (main === "facturado") return fmtMoney(x);
-            return fmtInt(x);
-          },
-          isMoney: main === "facturado",
-          isTime: main === "talkTimeSec"
-        };
-      }
+  const confirmar = confirm("¿Está seguro de reiniciar todo el reporte?");
 
-      kpiRow.innerHTML = "";
-      for(const k of base){
-        const a = cur[k.key] ?? 0;
-        const b = oth[k.key] ?? 0;
-        const dlt = (a - b);
-        const cls = deltaClass(dlt);
+  if(!confirmar){
+    return;
+  }
 
-        const div = document.createElement("div");
-        div.className = "kpi";
-        div.innerHTML = `
-          <div class="name">${k.label}</div>
-          <div class="val">${k.fmt ? k.fmt(a) : fmtInt(a)}</div>
-          <div class="sub">
-            <span class="chip mono">vs ${other === "2026-01-19" ? "19/01/2026" : "20/01/2026"}</span>
-            <span class="delta ${cls} mono">${deltaText(dlt, !!k.isMoney, !!k.isTime)}</span>
-          </div>
-        `;
-        kpiRow.appendChild(div);
-      }
-    }
+  proyectos = [];
 
-    // -----------------------------
-    // Charts
-    // -----------------------------
-    let totalsChart, rankChart;
+  document.getElementById("bloqueos").value = "";
+  document.getElementById("acciones").value = "";
 
-    function buildTotalsChart(){
-      const labels = ["19/01/2026", "20/01/2026"];
-      const d1 = totalsFromSource("2026-01-19", state.team);
-      const d2 = totalsFromSource("2026-01-20", state.team);
+  actualizarTodo();
 
-      const metrics = [
-        {key:"dials", label:"Dials"},
-        {key:"contacts", label:"Contacts"},
-        {key:"successFive9", label:"Success Five9"},
-        {key:"successHubspot", label:"Success HubSpot"},
-        {key:"leadInbound", label:"Lead Inbound"},
-        {key:"facturado", label:"Facturado (USD)", money:true}
-      ];
+  document.getElementById("btnReset").style.display = "none";
 
-      const ds = metrics.map(m => ({
-        label: m.label,
-        data: [d1[m.key] ?? 0, d2[m.key] ?? 0]
-      }));
+  alert("Reporte reiniciado correctamente.");
+}
+</script>
 
-      const ctx = document.getElementById("totalsChart");
-      if (totalsChart) totalsChart.destroy();
-      totalsChart = new Chart(ctx, {
-        type: "bar",
-        data: { labels, datasets: ds },
-        options: {
-          responsive:true,
-          maintainAspectRatio:false,
-          plugins:{
-            legend:{ position:"bottom", labels:{ color:"#e7eefc" } },
-            tooltip:{
-              callbacks:{
-                label: (ctx)=>{
-                  const label = ctx.dataset.label || "";
-                  const val = ctx.parsed.y ?? 0;
-                  const isMoney = label.includes("USD");
-                  return `${label}: ${isMoney ? fmtMoney(val) : fmtInt(val)}`;
-                }
-              }
-            }
-          },
-          scales:{
-            x:{ ticks:{ color:"#9fb2d6" }, grid:{ color:"rgba(255,255,255,.06)" } },
-            y:{ ticks:{ color:"#9fb2d6" }, grid:{ color:"rgba(255,255,255,.06)" } }
-          }
-        }
-      });
-    }
-
-    function buildRankChart(){
-      const rows = filteredRows(state.date, state.team);
-
-      const metric = state.metric;
-      const label = pickLabel(metric);
-
-      const values = rows.map(r => {
-        let v = r[metric] ?? 0;
-        if (metric === "talkTimeSec") v = timeToSeconds(r.talkTime);
-        return { agent: r.agent, team: r.team, v };
-      });
-
-      values.sort((a,b)=>b.v - a.v);
-      const top = values.slice(0, 10);
-
-      const labels = top.map(x => x.agent);
-      const data = top.map(x => x.v);
-
-      const ctx = document.getElementById("rankChart");
-      if (rankChart) rankChart.destroy();
-      rankChart = new Chart(ctx, {
-        type:"bar",
-        data:{
-          labels,
-          datasets:[{
-            label: `${label} (${state.date === "2026-01-19" ? "19/01" : "20/01"})`,
-            data
-          }]
-        },
-        options:{
-          indexAxis:"y",
-          responsive:true,
-          maintainAspectRatio:false,
-          plugins:{
-            legend:{ position:"bottom", labels:{ color:"#e7eefc" } },
-            tooltip:{
-              callbacks:{
-                label:(ctx)=>{
-                  const v = ctx.parsed.x ?? 0;
-                  if (metric === "facturado") return `${label}: ${fmtMoney(v)}`;
-                  if (metric === "talkTimeSec") return `${label}: ${secondsToHMS(v)}`;
-                  return `${label}: ${fmtInt(v)}`;
-                }
-              }
-            }
-          },
-          scales:{
-            x:{ ticks:{ color:"#9fb2d6" }, grid:{ color:"rgba(255,255,255,.06)" } },
-            y:{ ticks:{ color:"#9fb2d6" }, grid:{ color:"rgba(255,255,255,.06)" } }
-          }
-        }
-      });
-    }
-
-    // -----------------------------
-    // Table (con fila Totales usando tus totales)
-    // -----------------------------
-    function renderTable(){
-      const rows = filteredRows(state.date, state.team);
-      detailTbody.innerHTML = "";
-
-      for(const r of rows){
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${r.team}</td>
-          <td>${r.agent}</td>
-          <td class="right mono">${fmtInt(r.dials)}</td>
-          <td class="right mono">${fmtInt(r.contacts)}</td>
-          <td class="right mono">${fmtInt(r.successFive9)}</td>
-          <td class="right mono">${r.talkTime}</td>
-          <td class="right mono">${fmtInt(r.leadInbound)}</td>
-          <td class="right mono">${fmtInt(r.productPresentation)}</td>
-          <td class="right mono">${fmtInt(r.cotizacion)}</td>
-          <td class="right mono">${fmtInt(r.successHubspot)}</td>
-          <td class="right mono">${fmtInt(r.clienteOutbound)}</td>
-          <td class="right mono">${fmtInt(r.referido)}</td>
-          <td class="right mono">${fmtInt(r.inboundMesesAnteriores)}</td>
-          <td class="right mono">${fmtInt(r.nuevosLeadMM)}</td>
-          <td class="right mono">${fmtInt(r.totalClientes)}</td>
-          <td class="right mono">${fmtInt(r.campanas)}</td>
-          <td class="right mono">${fmtMoney(r.facturado)}</td>
-        `;
-        detailTbody.appendChild(tr);
-      }
-
-      // Totales:
-      // - Si Team = Todos: usa DAILY_TOTALS (los que pegaste ya totalizados)
-      // - Si Team específico: suma de filas (lo más lógico con la data disponible)
-      const totals = totalsFromSource(state.date, state.team);
-
-      const totalTr = document.createElement("tr");
-      totalTr.className = "totalRow";
-      totalTr.innerHTML = `
-        <td colspan="2">Totales</td>
-        <td class="right mono">${fmtInt(totals.dials)}</td>
-        <td class="right mono">${fmtInt(totals.contacts)}</td>
-        <td class="right mono">${fmtInt(totals.successFive9)}</td>
-        <td class="right mono">${secondsToHMS(totals.talkTimeSec)}</td>
-        <td class="right mono">${fmtInt(totals.leadInbound)}</td>
-        <td class="right mono">${fmtInt(totals.productPresentation)}</td>
-        <td class="right mono">${fmtInt(totals.cotizacion)}</td>
-        <td class="right mono">${fmtInt(totals.successHubspot)}</td>
-        <td class="right mono">${fmtInt(totals.clienteOutbound)}</td>
-        <td class="right mono">${fmtInt(totals.referido)}</td>
-        <td class="right mono">${fmtInt(totals.inboundMesesAnteriores)}</td>
-        <td class="right mono">${fmtInt(totals.nuevosLeadMM)}</td>
-        <td class="right mono">${fmtInt(totals.totalClientes)}</td>
-        <td class="right mono">${fmtInt(totals.campanas)}</td>
-        <td class="right mono">${fmtMoney(totals.facturado)}</td>
-      `;
-      detailTbody.appendChild(totalTr);
-    }
-
-    // -----------------------------
-    // Render All
-    // -----------------------------
-    function renderAll(){
-      renderKPIs();
-      buildTotalsChart();
-      buildRankChart();
-      renderTable();
-      lastUpdated.textContent = `Render: ${new Date().toLocaleString("es-ES")}`;
-    }
-
-    // -----------------------------
-    // Events
-    // -----------------------------
-    dateSel.addEventListener("change", (e)=>{
-      state.date = e.target.value;
-      renderAll();
-    });
-    teamSel.addEventListener("change", (e)=>{
-      state.team = e.target.value;
-      renderAll();
-    });
-    metricSel.addEventListener("change", (e)=>{
-      state.metric = e.target.value;
-      renderAll();
-    });
-    resetBtn.addEventListener("click", ()=>{
-      state.date = "2026-01-19";
-      state.team = "__ALL__";
-      state.metric = "facturado";
-      dateSel.value = state.date;
-      teamSel.value = state.team;
-      metricSel.value = state.metric;
-      renderAll();
-    });
-
-    // Boot
-    initTeams();
-    metricSel.value = state.metric;
-    renderAll();
-  </script>
 </body>
 </html>
