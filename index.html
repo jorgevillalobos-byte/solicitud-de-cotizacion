@@ -1,544 +1,498 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Elite Project Health Dashboard</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reporte de Auditoría</title>
 
-<style>
-body{font-family:Arial,sans-serif;background:#f4f6f9;margin:0;padding:20px;color:#1f2937}
-.container{max-width:1400px;margin:auto;background:white;padding:25px;border-radius:14px}
-h1,h2{color:#0f172a}
-label{font-weight:bold;display:block;margin-top:12px}
-input,select,textarea{width:100%;padding:10px;margin-top:5px;border:1px solid #cbd5e1;border-radius:8px;box-sizing:border-box}
-textarea{min-height:70px}
-.grid,.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
-.card{background:#fff;padding:18px;border-radius:12px;border:1px solid #e5e7eb}
-.card p{font-size:32px;font-weight:bold;margin:8px 0}
-button{margin-top:15px;padding:12px 18px;border:0;border-radius:8px;background:#2563eb;color:white;font-weight:bold;cursor:pointer}
-button:hover{opacity:.92}
-.danger{background:#dc2626}
-.admin-btn{background:#64748b}
-.success{background:#16a34a}
-.clear-btn{background:#475569}
-.admin-area{text-align:right;margin-top:20px}
-table{width:100%;border-collapse:collapse;margin-top:20px}
-th,td{border:1px solid #e5e7eb;padding:10px;text-align:left;font-size:14px;vertical-align:top}
-th{background:#f8fafc}
-.row-good{background:#f0fdfa}
-.row-risk{background:#fffbeb}
-.row-attention{background:#fef2f2}
-.badge{padding:7px 12px;border-radius:8px;font-weight:bold;display:inline-block}
-.badge-good{background:#ccfbf1;color:#0f766e}
-.badge-risk{background:#fef3c7;color:#92400e}
-.badge-attention{background:#fee2e2;color:#991b1b}
-.good{color:#14b8a6;font-weight:bold}
-.risk{color:#f59e0b;font-weight:bold}
-.attention{color:#ef4444;font-weight:bold}
-.small{font-size:12px;color:#64748b}
-.audit-details{margin-top:15px;border:1px solid #e5e7eb;border-radius:12px;background:#f8fafc;padding:14px}
-.audit-details summary{cursor:pointer;font-weight:bold;color:#0f172a}
-.audit-content{margin-top:15px;background:white;border-radius:10px;padding:15px}
-.audit-summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:10px}
-.audit-metric{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:10px;padding:10px}
-.audit-metric strong{display:block;font-size:12px;color:#64748b}
-.audit-metric span{font-size:22px;font-weight:bold;color:#0f172a}
-.header{display:flex;align-items:center;gap:25px;margin-bottom:25px;padding-bottom:20px;border-bottom:2px solid #e5e7eb}
-.logo{height:120px;width:auto;max-width:360px;object-fit:contain}
-.header-text h1{margin:0;font-size:42px;color:#0f172a}
-.header-text p{margin-top:8px;color:#64748b;font-size:16px}
-.table-wrapper{overflow-x:auto}
-@media(max-width:700px){
-  .header{flex-direction:column;text-align:center}
-  .logo{height:auto;width:100%;max-width:280px}
-  .header-text h1{font-size:30px}
-}
-</style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f6f9;
+      margin: 0;
+      padding: 0;
+      color: #001f3f;
+    }
+
+    .container {
+      max-width: 1140px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    h1, h2, h3 {
+      color: #001f3f;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 12px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 9px;
+      margin-top: 5px;
+      border: 1px solid #ccd6e0;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+
+    textarea {
+      min-height: 70px;
+    }
+
+    button {
+      border: none;
+      padding: 10px 16px;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+
+    .btn-save {
+      background: #00a65a;
+      color: white;
+    }
+
+    .btn-pdf {
+      background: #2f5f98;
+      color: white;
+    }
+
+    .btn-clear {
+      background: #435a78;
+      color: white;
+    }
+
+    .btn-delete {
+      background: #d9534f;
+      color: white;
+    }
+
+    .btn-add {
+      background: #001f3f;
+      color: white;
+    }
+
+    .audit-card {
+      background: #fff;
+      border: 1px solid #dce3ea;
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 20px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    .summary-box {
+      background: #eef4f8;
+      border: 1px solid #d5e1ea;
+      border-radius: 7px;
+      padding: 10px;
+    }
+
+    .summary-box small {
+      display: block;
+      color: #2f5f98;
+      font-weight: bold;
+    }
+
+    .summary-box strong {
+      font-size: 20px;
+    }
+
+    .project-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 15px;
+    }
+
+    .project-table th,
+    .project-table td {
+      border: 1px solid #dce3ea;
+      padding: 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .project-table th {
+      background: #f4f7fa;
+    }
+
+    .row-risk {
+      background: #fff9dc;
+    }
+
+    .row-attention {
+      background: #fdece8;
+    }
+
+    .project-link {
+      color: #0645ad;
+      font-weight: bold;
+      text-decoration: underline;
+    }
+
+    .status-risk {
+      background: #fff2cc;
+      color: #a66a00;
+      padding: 6px 10px;
+      border-radius: 5px;
+      font-weight: bold;
+      display: inline-block;
+    }
+
+    .status-attention {
+      background: #ffd9d2;
+      color: red;
+      padding: 6px 10px;
+      border-radius: 5px;
+      font-weight: bold;
+      display: inline-block;
+    }
+
+    .status-good {
+      background: #dff0d8;
+      color: #2d7a2d;
+      padding: 6px 10px;
+      border-radius: 5px;
+      font-weight: bold;
+      display: inline-block;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .search-box {
+      display: flex;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 20px;
+    }
+
+    .search-box div {
+      flex: 1;
+    }
+
+    @media print {
+      button,
+      .form-section,
+      .search-box {
+        display: none !important;
+      }
+
+      body {
+        background: white;
+      }
+
+      .container {
+        padding: 0;
+      }
+    }
+  </style>
 </head>
 
 <body>
-<div class="container">
+  <div class="container">
+    <h1>Reporte de Auditoría</h1>
 
-<div class="header">
-  <img src="logo-elite.png" alt="Elite" class="logo">
-  <div class="header-text">
-    <h1>Elite Project Health Dashboard</h1>
-    <p>Business Intelligence · Auditoría de Proyectos</p>
-  </div>
-</div>
+    <div class="form-section">
+      <h2>Crear Auditoría</h2>
 
-<h2>Datos de Auditoría</h2>
+      <div class="form-grid">
+        <div>
+          <label>Fecha de Auditoría</label>
+          <input type="date" id="fechaAuditoria" />
+        </div>
 
-<div class="grid">
-  <div>
-    <label>Fecha de Auditoría</label>
-    <input type="date" id="fechaAuditoria">
-  </div>
+        <div>
+          <label>Auditor</label>
+          <input type="text" id="auditor" value="Jorge VILLALOBOS" />
+        </div>
 
-  <div>
-    <label>Auditor</label>
-    <input type="text" id="auditor" placeholder="Nombre del auditor">
-  </div>
-</div>
+        <div>
+          <label>Team Responsable</label>
+          <input type="text" id="team" placeholder="Customer Services" />
+        </div>
+      </div>
 
-<h2>Dashboard Ejecutivo</h2>
+      <h3>Agregar Proyecto</h3>
 
-<div class="cards">
-  <div class="card"><h3>Total Projects</h3><p id="cardProjects">0</p></div>
-  <div class="card"><h3>Good</h3><p id="cardGood">0</p></div>
-  <div class="card"><h3>At Risk</h3><p id="cardRisk">0</p></div>
-  <div class="card"><h3>Needs Attention</h3><p id="cardAttention">0</p></div>
-  <div class="card"><h3>Late Projects</h3><p id="cardLate">0</p></div>
-</div>
+      <div class="form-grid">
+        <div>
+          <label>Project URL</label>
+          <input type="url" id="projectUrl" placeholder="https://..." />
+        </div>
 
-<h2>Agregar Proyecto</h2>
+        <div>
+          <label>Categoría</label>
+          <input type="text" id="categoria" placeholder="Recuperación GBP" />
+        </div>
 
-<div class="grid">
-  <div>
-    <label>Project URL</label>
-    <input type="url" id="projectUrl">
-  </div>
+        <div>
+          <label>Días Late</label>
+          <input type="number" id="diasLate" placeholder="50" />
+        </div>
+      </div>
 
-  <div>
-    <label>Team Responsable</label>
-    <input type="text" id="teamResponsable">
-  </div>
+      <div class="form-grid">
+        <div>
+          <label>Health</label>
+          <select id="health">
+            <option value="Good">Good</option>
+            <option value="At Risk">At Risk</option>
+            <option value="Needs Attention">Needs Attention</option>
+          </select>
+        </div>
 
-  <div>
-    <label>Categoría de Proyecto</label>
-    <input type="text" id="categoriaProyecto">
-  </div>
+        <div>
+          <label>Bloqueo</label>
+          <input type="text" id="bloqueo" placeholder="Opcional" />
+        </div>
 
-  <div>
-    <label>Días Late</label>
-    <input type="number" id="diasLate" min="0" value="0">
-  </div>
+        <div>
+          <label>Acción Requerida</label>
+          <input type="text" id="accion" placeholder="Opcional" />
+        </div>
+      </div>
 
-  <div>
-    <label>Health</label>
-    <select id="health">
-      <option>Good</option>
-      <option>At Risk</option>
-      <option>Needs Attention</option>
-    </select>
-  </div>
-</div>
+      <label>Última nota</label>
+      <textarea id="ultimaNota" placeholder="Escribe la última nota del proyecto..."></textarea>
 
-<label>Última nota</label>
-<textarea id="ultimaNota"></textarea>
+      <button class="btn-add" onclick="agregarProyecto()">Agregar Proyecto</button>
 
-<button onclick="agregarProyecto()">Agregar proyecto</button>
+      <h3>Proyectos agregados</h3>
+      <div id="previewProyectos"></div>
 
-<h2>Filtros</h2>
+      <button class="btn-save" onclick="guardarAuditoria()">Guardar Auditoría</button>
+    </div>
 
-<div class="grid">
-  <div>
-    <label>Filtrar por Team Responsable</label>
-    <input type="text" id="filterTeamResponsable" oninput="actualizarTabla()">
-  </div>
+    <hr />
 
-  <div>
-    <label>Filtrar por Categoría</label>
-    <input type="text" id="filterCategoriaProyecto" oninput="actualizarTabla()">
-  </div>
+    <h2>Historial de Auditorías</h2>
 
-  <div>
-    <label>Filtrar por Health</label>
-    <select id="filterHealth" onchange="actualizarTabla()">
-      <option value="">Todos</option>
-      <option>Good</option>
-      <option>At Risk</option>
-      <option>Needs Attention</option>
-    </select>
+    <div class="search-box">
+      <div>
+        <label>Buscar auditoría por fecha</label>
+        <input type="date" id="buscarFecha" onchange="renderizarHistorial()" />
+      </div>
+
+      <button class="btn-clear" onclick="limpiarBusqueda()">Limpiar búsqueda</button>
+      <button class="btn-pdf" onclick="guardarPDF()">Guardar Auditoría en PDF</button>
+      <button class="btn-delete" onclick="borrarTodo()">Borrar historial</button>
+    </div>
+
+    <div id="historialAuditorias"></div>
   </div>
 
-  <div>
-    <label>Ordenar por</label>
-    <select id="sortBy" onchange="actualizarTabla()">
-      <option value="">Sin ordenar</option>
-      <option value="health">Health</option>
-      <option value="teamResponsable">Team Responsable</option>
-      <option value="categoriaProyecto">Categoría</option>
-      <option value="diasLate">Días Late</option>
-    </select>
-  </div>
-</div>
-
-<h2>Listado de Proyectos</h2>
-
-<div class="table-wrapper">
-<table>
-<thead>
-<tr>
-  <th>#</th>
-  <th>Project URL</th>
-  <th>Team Responsable</th>
-  <th>Categoría</th>
-  <th>Días Late</th>
-  <th>Health</th>
-  <th>Última nota</th>
-  <th>Acción</th>
-</tr>
-</thead>
-<tbody id="tbody"></tbody>
-</table>
-</div>
-
-<h2>Bloqueos Identificados</h2>
-<textarea id="bloqueos"></textarea>
-
-<h2>Acciones Requeridas</h2>
-<textarea id="acciones"></textarea>
-
-<button class="success" onclick="guardarAuditoria()">Guardar Auditoría</button>
-
-<h2>Historial de Auditorías</h2>
-
-<div class="grid">
-  <div>
-    <label>Buscar auditoría por fecha</label>
-    <input type="date" id="buscarFechaAuditoria" oninput="renderHistorial()">
-  </div>
-
-  <div>
-    <label>&nbsp;</label>
-    <button class="clear-btn" onclick="limpiarBusquedaHistorial()">Limpiar búsqueda</button>
-  </div>
-</div>
-
-<div id="historialBody"></div>
-
-<div class="admin-area">
-  <button class="admin-btn" onclick="mostrarBotonAdmin()">Acceso Administrador</button>
-
-  <button id="btnReset" class="danger" onclick="reiniciarReporte()" style="display:none;">
-    Reiniciar reporte
-  </button>
-</div>
-
-<p class="small">
-  Nota: los datos se guardan en el navegador usando localStorage. En GitHub Pages funcionará sin base de datos.
-</p>
-
-</div>
-
-<script>
-let proyectos = [];
-let historialAuditorias = [];
-
-const STORAGE_KEY = "projectHealthData";
-
-document.addEventListener("DOMContentLoaded", function(){
-  cargarDatos();
-
-  document.getElementById("bloqueos").addEventListener("input", guardarDatos);
-  document.getElementById("acciones").addEventListener("input", guardarDatos);
-  document.getElementById("fechaAuditoria").addEventListener("input", guardarDatos);
-  document.getElementById("auditor").addEventListener("input", guardarDatos);
-});
-
-function guardarDatos(){
-  const data = {
-    proyectos: proyectos,
-    historialAuditorias: historialAuditorias,
-    bloqueos: document.getElementById("bloqueos").value,
-    acciones: document.getElementById("acciones").value,
-    fechaAuditoria: document.getElementById("fechaAuditoria").value,
-    auditor: document.getElementById("auditor").value
-  };
-
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
-
-function cargarDatos(){
-  const dataGuardada = localStorage.getItem(STORAGE_KEY);
-
-  if(!dataGuardada){
-    actualizarTodo();
-    return;
-  }
-
-  const data = JSON.parse(dataGuardada);
-
-  proyectos = data.proyectos || [];
-  historialAuditorias = data.historialAuditorias || [];
-
-  document.getElementById("bloqueos").value = data.bloqueos || "";
-  document.getElementById("acciones").value = data.acciones || "";
-  document.getElementById("fechaAuditoria").value = data.fechaAuditoria || "";
-  document.getElementById("auditor").value = data.auditor || "";
-
-  actualizarTodo();
-}
-
-function agregarProyecto(){
-  const projectUrl = document.getElementById("projectUrl").value;
-  const teamResponsable = document.getElementById("teamResponsable").value;
-  const categoriaProyecto = document.getElementById("categoriaProyecto").value;
-  const diasLate = Number(document.getElementById("diasLate").value);
-  const health = document.getElementById("health").value;
-  const ultimaNota = document.getElementById("ultimaNota").value;
-
-  if(!projectUrl || !teamResponsable || !categoriaProyecto){
-    alert("Completa Project URL, Team Responsable y Categoría.");
-    return;
-  }
-
-  proyectos.push({
-    projectUrl,
-    teamResponsable,
-    categoriaProyecto,
-    diasLate,
-    health,
-    ultimaNota
-  });
-
-  limpiarFormulario();
-  actualizarTodo();
-}
-
-function limpiarFormulario(){
-  document.getElementById("projectUrl").value = "";
-  document.getElementById("teamResponsable").value = "";
-  document.getElementById("categoriaProyecto").value = "";
-  document.getElementById("diasLate").value = 0;
-  document.getElementById("health").value = "Good";
-  document.getElementById("ultimaNota").value = "";
-}
-
-function healthBadge(health){
-  if(health === "Good"){
-    return '<span class="badge badge-good">Good</span>';
-  }
-
-  if(health === "At Risk"){
-    return '<span class="badge badge-risk">At Risk</span>';
-  }
-
-  return '<span class="badge badge-attention">Needs Attention</span>';
-}
-
-function rowClass(health){
-  if(health === "Good") return "row-good";
-  if(health === "At Risk") return "row-risk";
-  return "row-attention";
-}
-
-function diasLateBadge(diasLate){
-  if(diasLate > 5){
-    return '<span class="attention">' + diasLate + ' días late</span>';
-  }
-
-  if(diasLate > 0){
-    return '<span class="risk">' + diasLate + ' días late</span>';
-  }
-
-  return '<span class="good">0 días late</span>';
-}
-
-function obtenerProyectosFiltrados(){
-  const team = document.getElementById("filterTeamResponsable").value.toLowerCase();
-  const categoria = document.getElementById("filterCategoriaProyecto").value.toLowerCase();
-  const health = document.getElementById("filterHealth").value;
-  const sortBy = document.getElementById("sortBy").value;
-
-  let data = [...proyectos];
-
-  if(team){
-    data = data.filter(p => p.teamResponsable.toLowerCase().includes(team));
-  }
-
-  if(categoria){
-    data = data.filter(p => p.categoriaProyecto.toLowerCase().includes(categoria));
-  }
-
-  if(health){
-    data = data.filter(p => p.health === health);
-  }
-
-  if(sortBy === "health"){
-    const orden = {
-      "Needs Attention": 1,
-      "At Risk": 2,
-      "Good": 3
-    };
-    data.sort((a,b) => orden[a.health] - orden[b.health]);
-  }
-
-  if(sortBy === "teamResponsable"){
-    data.sort((a,b) => a.teamResponsable.localeCompare(b.teamResponsable));
-  }
-
-  if(sortBy === "categoriaProyecto"){
-    data.sort((a,b) => a.categoriaProyecto.localeCompare(b.categoriaProyecto));
-  }
-
-  if(sortBy === "diasLate"){
-    data.sort((a,b) => b.diasLate - a.diasLate);
-  }
-
-  return data;
-}
-
-function actualizarTabla(){
-  const tbody = document.getElementById("tbody");
-  tbody.innerHTML = "";
-
-  const data = obtenerProyectosFiltrados();
-
-  data.forEach((p,i) => {
-    const originalIndex = proyectos.indexOf(p);
-
-    tbody.innerHTML += `
-      <tr class="${rowClass(p.health)}">
-        <td>${i + 1}</td>
-        <td><a href="${p.projectUrl}" target="_blank">Open project</a></td>
-        <td>${p.teamResponsable}</td>
-        <td>${p.categoriaProyecto}</td>
-        <td>${diasLateBadge(p.diasLate)}</td>
-        <td>${healthBadge(p.health)}</td>
-        <td>${p.ultimaNota || "Sin nota registrada"}</td>
-        <td><button class="danger" onclick="eliminarProyecto(${originalIndex})">Eliminar</button></td>
-      </tr>
-    `;
-  });
-}
-
-function actualizarCards(){
-  const total = proyectos.length;
-  const good = proyectos.filter(p => p.health === "Good").length;
-  const risk = proyectos.filter(p => p.health === "At Risk").length;
-  const attention = proyectos.filter(p => p.health === "Needs Attention").length;
-  const late = proyectos.filter(p => Number(p.diasLate) > 0).length;
-
-  document.getElementById("cardProjects").innerText = total;
-  document.getElementById("cardGood").innerText = good;
-  document.getElementById("cardRisk").innerText = risk;
-  document.getElementById("cardAttention").innerText = attention;
-  document.getElementById("cardLate").innerText = late;
-}
-
-function eliminarProyecto(i){
-  const password = prompt("Ingrese contraseña para eliminar este proyecto:");
-
-  if(password !== "Elite2025"){
-    alert("Contraseña incorrecta.");
-    return;
-  }
-
-  proyectos.splice(i,1);
-  actualizarTodo();
-}
-
-function guardarAuditoria(){
-  const fecha = document.getElementById("fechaAuditoria").value;
-  const auditor = document.getElementById("auditor").value;
-
-  if(!fecha){
-    alert("Seleccione una fecha de auditoría.");
-    return;
-  }
-
-  const auditoria = {
-    fecha: fecha,
-    auditor: auditor || "-",
-    total: proyectos.length,
-    good: proyectos.filter(p => p.health === "Good").length,
-    risk: proyectos.filter(p => p.health === "At Risk").length,
-    attention: proyectos.filter(p => p.health === "Needs Attention").length,
-    late: proyectos.filter(p => Number(p.diasLate) > 0).length,
-    bloqueos: document.getElementById("bloqueos").value,
-    acciones: document.getElementById("acciones").value,
-    proyectos: JSON.parse(JSON.stringify(proyectos)),
-    fechaGuardado: new Date().toLocaleString()
-  };
-
-  historialAuditorias.push(auditoria);
-
-  guardarDatos();
-  renderHistorial();
-
-  alert("Auditoría guardada correctamente.");
-}
-
-function renderHistorial(){
-  const contenedor = document.getElementById("historialBody");
-  const fechaBusqueda = document.getElementById("buscarFechaAuditoria").value;
-
-  contenedor.innerHTML = "";
-
-  let data = [...historialAuditorias];
-
-  if(fechaBusqueda){
-    data = data.filter(a => a.fecha === fechaBusqueda);
-  }
-
-  if(data.length === 0){
-    contenedor.innerHTML = `
-      <p style="margin-top:15px;color:#64748b;">
-        No hay auditorías guardadas para esta fecha.
-      </p>
-    `;
-    return;
-  }
-
-  data.forEach((a, i) => {
-    const proyectosHTML = (a.proyectos || []).map((p, index) => `
-      <tr class="${rowClass(p.health)}">
-        <td>${index + 1}</td>
-        <td><a href="${p.projectUrl}" target="_blank">Open project</a></td>
-        <td>${p.teamResponsable}</td>
-        <td>${p.categoriaProyecto}</td>
-        <td>${diasLateBadge(p.diasLate)}</td>
-        <td>${healthBadge(p.health)}</td>
-        <td>${p.ultimaNota || "Sin nota registrada"}</td>
-      </tr>
-    `).join("");
-
-    contenedor.innerHTML += `
-      <details class="audit-details">
-        <summary>
-          Auditoría ${i + 1} | Fecha: ${a.fecha} | Auditor: ${a.auditor || "-"} | Total: ${a.total} | Guardado: ${a.fechaGuardado}
-        </summary>
-
-        <div class="audit-content">
-          <div class="audit-summary-grid">
-            <div class="audit-metric">
-              <strong>Total Projects</strong>
-              <span>${a.total}</span>
+  <script>
+    let proyectosTemporales = [];
+
+    document.getElementById("fechaAuditoria").valueAsDate = new Date();
+
+    function agregarProyecto() {
+      const url = document.getElementById("projectUrl").value.trim();
+      const team = document.getElementById("team").value.trim();
+      const categoria = document.getElementById("categoria").value.trim();
+      const diasLate = document.getElementById("diasLate").value;
+      const health = document.getElementById("health").value;
+      const ultimaNota = document.getElementById("ultimaNota").value.trim();
+      const bloqueo = document.getElementById("bloqueo").value.trim();
+      const accion = document.getElementById("accion").value.trim();
+
+      if (!url || !team || !categoria || !diasLate || !ultimaNota) {
+        alert("Completa Project URL, Team, Categoría, Días Late y Última nota.");
+        return;
+      }
+
+      proyectosTemporales.push({
+        url,
+        team,
+        categoria,
+        diasLate: Number(diasLate),
+        health,
+        ultimaNota,
+        bloqueo,
+        accion
+      });
+
+      limpiarFormularioProyecto();
+      renderizarPreview();
+    }
+
+    function limpiarFormularioProyecto() {
+      document.getElementById("projectUrl").value = "";
+      document.getElementById("categoria").value = "";
+      document.getElementById("diasLate").value = "";
+      document.getElementById("health").value = "Good";
+      document.getElementById("ultimaNota").value = "";
+      document.getElementById("bloqueo").value = "";
+      document.getElementById("accion").value = "";
+    }
+
+    function renderizarPreview() {
+      const contenedor = document.getElementById("previewProyectos");
+
+      if (proyectosTemporales.length === 0) {
+        contenedor.innerHTML = "<p>No hay proyectos agregados.</p>";
+        return;
+      }
+
+      contenedor.innerHTML = `
+        <table class="project-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Project URL</th>
+              <th>Team Responsable</th>
+              <th>Categoría</th>
+              <th>Días Late</th>
+              <th>Health</th>
+              <th>Última nota</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${proyectosTemporales.map((p, index) => `
+              <tr>
+                <td>${index + 1}</td>
+                <td><a class="project-link" href="${p.url}" target="_blank">Open project</a></td>
+                <td>${p.team}</td>
+                <td>${p.categoria}</td>
+                <td style="color:red;">${p.diasLate} días late</td>
+                <td>${badgeHealth(p.health)}</td>
+                <td>${p.ultimaNota}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function guardarAuditoria() {
+      const fecha = document.getElementById("fechaAuditoria").value;
+      const auditor = document.getElementById("auditor").value.trim();
+
+      if (!fecha || !auditor) {
+        alert("Completa la fecha y el auditor.");
+        return;
+      }
+
+      if (proyectosTemporales.length === 0) {
+        alert("Agrega al menos un proyecto.");
+        return;
+      }
+
+      const auditorias = JSON.parse(localStorage.getItem("auditorias")) || [];
+
+      const auditoria = {
+        id: Date.now(),
+        fecha,
+        auditor,
+        total: proyectosTemporales.length,
+        good: proyectosTemporales.filter(p => p.health === "Good").length,
+        atRisk: proyectosTemporales.filter(p => p.health === "At Risk").length,
+        needsAttention: proyectosTemporales.filter(p => p.health === "Needs Attention").length,
+        late: proyectosTemporales.filter(p => p.diasLate > 0).length,
+        guardado: new Date().toLocaleString(),
+        bloqueos: proyectosTemporales
+          .filter(p => p.bloqueo)
+          .map(p => p.bloqueo),
+        acciones: proyectosTemporales
+          .filter(p => p.accion)
+          .map(p => p.accion),
+        proyectos: proyectosTemporales
+      };
+
+      auditorias.unshift(auditoria);
+
+      localStorage.setItem("auditorias", JSON.stringify(auditorias));
+
+      proyectosTemporales = [];
+      renderizarPreview();
+      renderizarHistorial();
+
+      alert("Auditoría guardada correctamente.");
+    }
+
+    function renderizarHistorial() {
+      const contenedor = document.getElementById("historialAuditorias");
+      const auditorias = JSON.parse(localStorage.getItem("auditorias")) || [];
+      const buscarFecha = document.getElementById("buscarFecha").value;
+
+      const filtradas = buscarFecha
+        ? auditorias.filter(a => a.fecha === buscarFecha)
+        : auditorias;
+
+      if (filtradas.length === 0) {
+        contenedor.innerHTML = "<p>No hay auditorías guardadas.</p>";
+        return;
+      }
+
+      contenedor.innerHTML = filtradas.map((auditoria, index) => `
+        <div class="audit-card">
+          <h3>
+            Auditoría ${index + 1} | Fecha: ${auditoria.fecha} |
+            Auditor: ${auditoria.auditor} |
+            Total: ${auditoria.total} |
+            Guardado: ${auditoria.guardado}
+          </h3>
+
+          <div class="summary-grid">
+            <div class="summary-box">
+              <small>Total Projects</small>
+              <strong>${auditoria.total}</strong>
             </div>
-
-            <div class="audit-metric">
-              <strong>Good</strong>
-              <span>${a.good}</span>
+            <div class="summary-box">
+              <small>Good</small>
+              <strong>${auditoria.good}</strong>
             </div>
-
-            <div class="audit-metric">
-              <strong>At Risk</strong>
-              <span>${a.risk}</span>
+            <div class="summary-box">
+              <small>At Risk</small>
+              <strong>${auditoria.atRisk}</strong>
             </div>
-
-            <div class="audit-metric">
-              <strong>Needs Attention</strong>
-              <span>${a.attention}</span>
+            <div class="summary-box">
+              <small>Needs Attention</small>
+              <strong>${auditoria.needsAttention}</strong>
             </div>
-
-            <div class="audit-metric">
-              <strong>Late</strong>
-              <span>${a.late}</span>
+            <div class="summary-box">
+              <small>Late</small>
+              <strong>${auditoria.late}</strong>
             </div>
           </div>
 
           <h3>Bloqueos Identificados</h3>
-          <p>${a.bloqueos || "Sin bloqueos registrados."}</p>
+          ${
+            auditoria.bloqueos && auditoria.bloqueos.length > 0
+              ? `<ul>${auditoria.bloqueos.map(b => `<li>${b}</li>`).join("")}</ul>`
+              : `<p>Sin bloqueos registrados.</p>`
+          }
 
           <h3>Acciones Requeridas</h3>
-          <p>${a.acciones || "Sin acciones registradas."}</p>
+          ${
+            auditoria.acciones && auditoria.acciones.length > 0
+              ? `<ul>${auditoria.acciones.map(a => `<li>${a}</li>`).join("")}</ul>`
+              : `<p>Sin acciones registradas.</p>`
+          }
 
           <h3>Proyectos auditados</h3>
 
-          <div class="table-wrapper">
-          <table>
+          <table class="project-table">
             <thead>
               <tr>
                 <th>#</th>
@@ -551,74 +505,79 @@ function renderHistorial(){
               </tr>
             </thead>
             <tbody>
-              ${
-                proyectosHTML ||
-                `<tr><td colspan="7">No hay proyectos guardados en esta auditoría.</td></tr>`
-              }
+              ${auditoria.proyectos.map((p, i) => `
+                <tr class="${p.health === "At Risk" ? "row-risk" : p.health === "Needs Attention" ? "row-attention" : ""}">
+                  <td>${i + 1}</td>
+                  <td>
+                    <a class="project-link" href="${p.url}" target="_blank">
+                      Open project
+                    </a>
+                  </td>
+                  <td>${p.team}</td>
+                  <td>${p.categoria}</td>
+                  <td style="color:red;">${p.diasLate} días late</td>
+                  <td>${badgeHealth(p.health)}</td>
+                  <td>${p.ultimaNota}</td>
+                </tr>
+              `).join("")}
             </tbody>
           </table>
-          </div>
         </div>
-      </details>
-    `;
-  });
-}
+      `).join("");
+    }
 
-function limpiarBusquedaHistorial(){
-  document.getElementById("buscarFechaAuditoria").value = "";
-  renderHistorial();
-}
+    function badgeHealth(health) {
+      if (health === "At Risk") {
+        return `<span class="status-risk">At Risk</span>`;
+      }
 
-function actualizarTodo(){
-  actualizarTabla();
-  actualizarCards();
-  renderHistorial();
-  guardarDatos();
-}
+      if (health === "Needs Attention") {
+        return `<span class="status-attention">Needs Attention</span>`;
+      }
 
-function mostrarBotonAdmin(){
-  const password = prompt("Contraseña de administrador:");
+      return `<span class="status-good">Good</span>`;
+    }
 
-  if(password === "Elite2025"){
-    document.getElementById("btnReset").style.display = "inline-block";
-    alert("Acceso concedido.");
-  }else{
-    alert("Contraseña incorrecta.");
-  }
-}
+    function limpiarBusqueda() {
+      document.getElementById("buscarFecha").value = "";
+      renderizarHistorial();
+    }
 
-function reiniciarReporte(){
-  const password = prompt("Confirme nuevamente la contraseña:");
+    function guardarPDF() {
+      const historial = document.getElementById("historialAuditorias");
 
-  if(password !== "Elite2025"){
-    alert("Contraseña incorrecta.");
-    return;
-  }
+      if (!historial.innerHTML.trim() || historial.innerText.includes("No hay auditorías")) {
+        alert("No hay auditorías para exportar.");
+        return;
+      }
 
-  const confirmar = confirm("¿Está seguro de reiniciar todo el reporte?");
+      const opciones = {
+        margin: 0.25,
+        filename: "Auditoria_Guardada.pdf",
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true
+        },
+        jsPDF: {
+          unit: "in",
+          format: "letter",
+          orientation: "landscape"
+        }
+      };
 
-  if(!confirmar){
-    return;
-  }
+      html2pdf().set(opciones).from(historial).save();
+    }
 
-  proyectos = [];
-  historialAuditorias = [];
+    function borrarTodo() {
+      if (confirm("¿Seguro que deseas borrar todo el historial?")) {
+        localStorage.removeItem("auditorias");
+        renderizarHistorial();
+      }
+    }
 
-  document.getElementById("bloqueos").value = "";
-  document.getElementById("acciones").value = "";
-  document.getElementById("fechaAuditoria").value = "";
-  document.getElementById("auditor").value = "";
-  document.getElementById("buscarFechaAuditoria").value = "";
-
-  localStorage.removeItem(STORAGE_KEY);
-
-  actualizarTodo();
-
-  document.getElementById("btnReset").style.display = "none";
-
-  alert("Reporte reiniciado correctamente.");
-}
-</script>
-
+    renderizarPreview();
+    renderizarHistorial();
+  </script>
 </body>
 </html>
