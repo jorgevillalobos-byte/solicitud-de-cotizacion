@@ -18,6 +18,7 @@ button{margin-top:15px;padding:12px 18px;border:0;border-radius:8px;background:#
 .danger{background:#dc2626}
 .admin-btn{background:#64748b}
 .success{background:#16a34a}
+.clear-btn{background:#475569}
 .admin-area{text-align:right;margin-top:20px}
 table{width:100%;border-collapse:collapse;margin-top:20px}
 th,td{border:1px solid #e5e7eb;padding:10px;text-align:left;font-size:14px;vertical-align:top}
@@ -33,6 +34,13 @@ th{background:#f8fafc}
 .risk{color:#f59e0b;font-weight:bold}
 .attention{color:#ef4444;font-weight:bold}
 .small{font-size:12px;color:#64748b}
+.audit-details{margin-top:15px;border:1px solid #e5e7eb;border-radius:12px;background:#f8fafc;padding:14px}
+.audit-details summary{cursor:pointer;font-weight:bold;color:#0f172a}
+.audit-content{margin-top:15px;background:white;border-radius:10px;padding:15px}
+.audit-summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:10px}
+.audit-metric{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:10px;padding:10px}
+.audit-metric strong{display:block;font-size:12px;color:#64748b}
+.audit-metric span{font-size:22px;font-weight:bold;color:#0f172a}
 </style>
 </head>
 
@@ -166,22 +174,19 @@ th{background:#f8fafc}
 
 <h2>Historial de Auditorías</h2>
 
-<table>
-<thead>
-<tr>
-  <th>#</th>
-  <th>Fecha Auditoría</th>
-  <th>Auditor</th>
-  <th>Total</th>
-  <th>Good</th>
-  <th>At Risk</th>
-  <th>Needs Attention</th>
-  <th>Late</th>
-  <th>Guardado</th>
-</tr>
-</thead>
-<tbody id="historialBody"></tbody>
-</table>
+<div class="grid">
+  <div>
+    <label>Buscar auditoría por fecha</label>
+    <input type="date" id="buscarFechaAuditoria" oninput="renderHistorial()">
+  </div>
+
+  <div>
+    <label>&nbsp;</label>
+    <button class="clear-btn" onclick="limpiarBusquedaHistorial()">Limpiar búsqueda</button>
+  </div>
+</div>
+
+<div id="historialBody"></div>
 
 <div class="admin-area">
   <button class="admin-btn" onclick="mostrarBotonAdmin()">Acceso Administrador</button>
@@ -244,7 +249,6 @@ function cargarDatos(){
   document.getElementById("auditor").value = data.auditor || "";
 
   actualizarTodo();
-  renderHistorial();
 }
 
 function agregarProyecto(){
@@ -438,33 +442,109 @@ function guardarAuditoria(){
 }
 
 function renderHistorial(){
-  const tbody = document.getElementById("historialBody");
-  tbody.innerHTML = "";
+  const contenedor = document.getElementById("historialBody");
+  const fechaBusqueda = document.getElementById("buscarFechaAuditoria").value;
 
-  if(historialAuditorias.length === 0){
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="9">No hay auditorías guardadas.</td>
-      </tr>
+  contenedor.innerHTML = "";
+
+  let data = [...historialAuditorias];
+
+  if(fechaBusqueda){
+    data = data.filter(a => a.fecha === fechaBusqueda);
+  }
+
+  if(data.length === 0){
+    contenedor.innerHTML = `
+      <p style="margin-top:15px;color:#64748b;">
+        No hay auditorías guardadas para esta fecha.
+      </p>
     `;
     return;
   }
 
-  historialAuditorias.forEach((a, i) => {
-    tbody.innerHTML += `
-      <tr>
-        <td>${i + 1}</td>
-        <td>${a.fecha}</td>
-        <td>${a.auditor || "-"}</td>
-        <td>${a.total}</td>
-        <td>${a.good}</td>
-        <td>${a.risk}</td>
-        <td>${a.attention}</td>
-        <td>${a.late}</td>
-        <td>${a.fechaGuardado}</td>
+  data.forEach((a, i) => {
+    const proyectosHTML = (a.proyectos || []).map((p, index) => `
+      <tr class="${rowClass(p.health)}">
+        <td>${index + 1}</td>
+        <td><a href="${p.projectUrl}" target="_blank">Open project</a></td>
+        <td>${p.teamResponsable}</td>
+        <td>${p.categoriaProyecto}</td>
+        <td>${diasLateBadge(p.diasLate)}</td>
+        <td>${healthBadge(p.health)}</td>
+        <td>${p.ultimaNota || "Sin nota registrada"}</td>
       </tr>
+    `).join("");
+
+    contenedor.innerHTML += `
+      <details class="audit-details">
+        <summary>
+          Auditoría ${i + 1} | Fecha: ${a.fecha} | Auditor: ${a.auditor || "-"} | Total: ${a.total} | Guardado: ${a.fechaGuardado}
+        </summary>
+
+        <div class="audit-content">
+          <div class="audit-summary-grid">
+            <div class="audit-metric">
+              <strong>Total Projects</strong>
+              <span>${a.total}</span>
+            </div>
+
+            <div class="audit-metric">
+              <strong>Good</strong>
+              <span>${a.good}</span>
+            </div>
+
+            <div class="audit-metric">
+              <strong>At Risk</strong>
+              <span>${a.risk}</span>
+            </div>
+
+            <div class="audit-metric">
+              <strong>Needs Attention</strong>
+              <span>${a.attention}</span>
+            </div>
+
+            <div class="audit-metric">
+              <strong>Late</strong>
+              <span>${a.late}</span>
+            </div>
+          </div>
+
+          <h3>Bloqueos Identificados</h3>
+          <p>${a.bloqueos || "Sin bloqueos registrados."}</p>
+
+          <h3>Acciones Requeridas</h3>
+          <p>${a.acciones || "Sin acciones registradas."}</p>
+
+          <h3>Proyectos auditados</h3>
+
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Project URL</th>
+                <th>Team Responsable</th>
+                <th>Categoría</th>
+                <th>Días Late</th>
+                <th>Health</th>
+                <th>Última nota</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${
+                proyectosHTML ||
+                `<tr><td colspan="7">No hay proyectos guardados en esta auditoría.</td></tr>`
+              }
+            </tbody>
+          </table>
+        </div>
+      </details>
     `;
   });
+}
+
+function limpiarBusquedaHistorial(){
+  document.getElementById("buscarFechaAuditoria").value = "";
+  renderHistorial();
 }
 
 function actualizarTodo(){
@@ -506,6 +586,7 @@ function reiniciarReporte(){
   document.getElementById("acciones").value = "";
   document.getElementById("fechaAuditoria").value = "";
   document.getElementById("auditor").value = "";
+  document.getElementById("buscarFechaAuditoria").value = "";
 
   localStorage.removeItem(STORAGE_KEY);
 
