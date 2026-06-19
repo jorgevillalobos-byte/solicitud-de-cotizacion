@@ -17,6 +17,7 @@ textarea{min-height:70px}
 button{margin-top:15px;padding:12px 18px;border:0;border-radius:8px;background:#2563eb;color:white;font-weight:bold;cursor:pointer}
 .danger{background:#dc2626}
 .admin-btn{background:#64748b}
+.success{background:#16a34a}
 .admin-area{text-align:right;margin-top:20px}
 table{width:100%;border-collapse:collapse;margin-top:20px}
 th,td{border:1px solid #e5e7eb;padding:10px;text-align:left;font-size:14px;vertical-align:top}
@@ -31,6 +32,7 @@ th{background:#f8fafc}
 .good{color:#14b8a6;font-weight:bold}
 .risk{color:#f59e0b;font-weight:bold}
 .attention{color:#ef4444;font-weight:bold}
+.small{font-size:12px;color:#64748b}
 </style>
 </head>
 
@@ -38,6 +40,20 @@ th{background:#f8fafc}
 <div class="container">
 
 <h1>Project Health</h1>
+
+<h2>Datos de Auditoría</h2>
+
+<div class="grid">
+  <div>
+    <label>Fecha de Auditoría</label>
+    <input type="date" id="fechaAuditoria">
+  </div>
+
+  <div>
+    <label>Auditor</label>
+    <input type="text" id="auditor" placeholder="Nombre del auditor">
+  </div>
+</div>
 
 <h2>Dashboard Ejecutivo</h2>
 
@@ -64,7 +80,7 @@ th{background:#f8fafc}
 
   <div>
     <label>Categoría de Proyecto</label>
-    <input type="text" id="categoriaProyecto" placeholder="Escribe la categoría">
+    <input type="text" id="categoriaProyecto">
   </div>
 
   <div>
@@ -146,24 +162,90 @@ th{background:#f8fafc}
 <h2>Acciones Requeridas</h2>
 <textarea id="acciones"></textarea>
 
-<div class="admin-area">
-  <button class="admin-btn" onclick="mostrarBotonAdmin()">
-    Acceso Administrador
-  </button>
+<button class="success" onclick="guardarAuditoria()">Guardar Auditoría</button>
 
-  <button
-    id="btnReset"
-    class="danger"
-    onclick="reiniciarReporte()"
-    style="display:none;">
+<h2>Historial de Auditorías</h2>
+
+<table>
+<thead>
+<tr>
+  <th>#</th>
+  <th>Fecha Auditoría</th>
+  <th>Auditor</th>
+  <th>Total</th>
+  <th>Good</th>
+  <th>At Risk</th>
+  <th>Needs Attention</th>
+  <th>Late</th>
+  <th>Guardado</th>
+</tr>
+</thead>
+<tbody id="historialBody"></tbody>
+</table>
+
+<div class="admin-area">
+  <button class="admin-btn" onclick="mostrarBotonAdmin()">Acceso Administrador</button>
+
+  <button id="btnReset" class="danger" onclick="reiniciarReporte()" style="display:none;">
     Reiniciar reporte
   </button>
 </div>
+
+<p class="small">
+  Nota: los datos se guardan en el navegador usando localStorage. En GitHub Pages funcionará sin base de datos.
+</p>
 
 </div>
 
 <script>
 let proyectos = [];
+let historialAuditorias = [];
+
+const STORAGE_KEY = "projectHealthData";
+
+document.addEventListener("DOMContentLoaded", function(){
+  cargarDatos();
+
+  document.getElementById("bloqueos").addEventListener("input", guardarDatos);
+  document.getElementById("acciones").addEventListener("input", guardarDatos);
+  document.getElementById("fechaAuditoria").addEventListener("input", guardarDatos);
+  document.getElementById("auditor").addEventListener("input", guardarDatos);
+});
+
+function guardarDatos(){
+  const data = {
+    proyectos: proyectos,
+    historialAuditorias: historialAuditorias,
+    bloqueos: document.getElementById("bloqueos").value,
+    acciones: document.getElementById("acciones").value,
+    fechaAuditoria: document.getElementById("fechaAuditoria").value,
+    auditor: document.getElementById("auditor").value
+  };
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function cargarDatos(){
+  const dataGuardada = localStorage.getItem(STORAGE_KEY);
+
+  if(!dataGuardada){
+    actualizarTodo();
+    return;
+  }
+
+  const data = JSON.parse(dataGuardada);
+
+  proyectos = data.proyectos || [];
+  historialAuditorias = data.historialAuditorias || [];
+
+  document.getElementById("bloqueos").value = data.bloqueos || "";
+  document.getElementById("acciones").value = data.acciones || "";
+  document.getElementById("fechaAuditoria").value = data.fechaAuditoria || "";
+  document.getElementById("auditor").value = data.auditor || "";
+
+  actualizarTodo();
+  renderHistorial();
+}
 
 function agregarProyecto(){
   const projectUrl = document.getElementById("projectUrl").value;
@@ -324,9 +406,72 @@ function eliminarProyecto(i){
   actualizarTodo();
 }
 
+function guardarAuditoria(){
+  const fecha = document.getElementById("fechaAuditoria").value;
+  const auditor = document.getElementById("auditor").value;
+
+  if(!fecha){
+    alert("Seleccione una fecha de auditoría.");
+    return;
+  }
+
+  const auditoria = {
+    fecha: fecha,
+    auditor: auditor || "-",
+    total: proyectos.length,
+    good: proyectos.filter(p => p.health === "Good").length,
+    risk: proyectos.filter(p => p.health === "At Risk").length,
+    attention: proyectos.filter(p => p.health === "Needs Attention").length,
+    late: proyectos.filter(p => Number(p.diasLate) > 0).length,
+    bloqueos: document.getElementById("bloqueos").value,
+    acciones: document.getElementById("acciones").value,
+    proyectos: JSON.parse(JSON.stringify(proyectos)),
+    fechaGuardado: new Date().toLocaleString()
+  };
+
+  historialAuditorias.push(auditoria);
+
+  guardarDatos();
+  renderHistorial();
+
+  alert("Auditoría guardada correctamente.");
+}
+
+function renderHistorial(){
+  const tbody = document.getElementById("historialBody");
+  tbody.innerHTML = "";
+
+  if(historialAuditorias.length === 0){
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="9">No hay auditorías guardadas.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  historialAuditorias.forEach((a, i) => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${a.fecha}</td>
+        <td>${a.auditor || "-"}</td>
+        <td>${a.total}</td>
+        <td>${a.good}</td>
+        <td>${a.risk}</td>
+        <td>${a.attention}</td>
+        <td>${a.late}</td>
+        <td>${a.fechaGuardado}</td>
+      </tr>
+    `;
+  });
+}
+
 function actualizarTodo(){
   actualizarTabla();
   actualizarCards();
+  renderHistorial();
+  guardarDatos();
 }
 
 function mostrarBotonAdmin(){
@@ -355,9 +500,14 @@ function reiniciarReporte(){
   }
 
   proyectos = [];
+  historialAuditorias = [];
 
   document.getElementById("bloqueos").value = "";
   document.getElementById("acciones").value = "";
+  document.getElementById("fechaAuditoria").value = "";
+  document.getElementById("auditor").value = "";
+
+  localStorage.removeItem(STORAGE_KEY);
 
   actualizarTodo();
 
